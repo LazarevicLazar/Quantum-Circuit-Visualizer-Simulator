@@ -2,6 +2,22 @@
 
 A drag-and-drop visual interface that allows users to build and simulate quantum circuits using standard quantum gates like Hadamard (H), Pauli (X, Y, Z), CNOT, Toffoli, etc. The tool provides a real-time visualization of the circuit's state and simulates quantum operations.
 
+## Table of Contents
+
+- [Features](#features)
+- [Installation](#installation)
+  - [Prerequisites](#prerequisites)
+  - [Quick Setup](#quick-setup)
+  - [Manual Setup](#manual-setup)
+- [Usage](#usage)
+- [Contributing](#contributing)
+  - [Adding New Gates](#adding-new-gates)
+  - [Extending Visualizations](#extending-visualizations)
+- [Troubleshooting](#troubleshooting)
+- [License](#license)
+- [Contact](#contact)
+- [Acknowledgments](#acknowledgments)
+
 ## Features
 
 - **Drag-and-Drop Gate Builder** – Users can drag quantum gates onto a workspace to construct circuits.
@@ -12,36 +28,15 @@ A drag-and-drop visual interface that allows users to build and simulate quantum
 - **Noise Simulation** – Toggle realistic quantum noise to see how errors impact results.
 - **Multi-Qubit Entanglement** – Visualize Bell states and GHZ states dynamically.
 
-## Tech Stack
+## Installation
 
-- **Frontend**: React with TypeScript, Tailwind CSS
-- **Backend**: Python with FastAPI
-- **Quantum Simulation**: Qiskit
-- **Visualization**: D3.js and Three.js
+### Prerequisites
 
-## Project Structure
+- Node.js (v14 or higher)
+- Python (v3.8 or higher)
+- npm or yarn
 
-```
-quantum-circuit-visualizer/
-├── frontend/                 # React frontend
-│   ├── public/               # Static files
-│   └── src/                  # Source code
-│       ├── api/              # API client
-│       ├── components/       # React components
-│       │   ├── circuit/      # Circuit editor components
-│       │   ├── controls/     # Control panel components
-│       │   └── visualization/ # Visualization components
-│       └── types/            # TypeScript type definitions
-└── backend/                  # Python FastAPI backend
-    ├── main.py               # Main application entry point
-    ├── models.py             # Pydantic models
-    ├── quantum_simulator.py  # Quantum simulation logic
-    └── requirements.txt      # Python dependencies
-```
-
-## Quick Setup
-
-### Using Setup Scripts
+### Quick Setup
 
 For convenience, we've provided setup scripts for both Linux/macOS and Windows:
 
@@ -75,12 +70,6 @@ npm start
 ### Manual Setup
 
 If you prefer to set up manually, follow these steps:
-
-#### Prerequisites
-
-- Node.js (v14 or higher)
-- Python (v3.8 or higher)
-- npm or yarn
 
 #### Frontend Setup
 
@@ -122,7 +111,6 @@ If you prefer to set up manually, follow these steps:
 3. Install dependencies:
 
    ```
-   pip install numpy==1.23.5  # Install numpy first to avoid conflicts
    pip install -r requirements.txt
    ```
 
@@ -134,7 +122,7 @@ If you prefer to set up manually, follow these steps:
 
    The API will be available at http://localhost:8000
 
-### Running Both Frontend and Backend
+#### Running Both Frontend and Backend
 
 For convenience, you can use the root package.json scripts to run both servers:
 
@@ -151,41 +139,34 @@ npm start
 5. Use the control panel to step through the simulation or toggle noise
 6. Export your circuit to QASM or import existing circuits
 
-## Development
+### Project Structure
 
-### Adding New Gates
+```
+quantum-circuit-visualizer/
+├── frontend/                 # React frontend
+│   ├── public/               # Static files
+│   └── src/                  # Source code
+│       ├── api/              # API client
+│       ├── components/       # React components
+│       │   ├── circuit/      # Circuit editor components
+│       │   ├── controls/     # Control panel components
+│       │   └── visualization/ # Visualization components
+│       └── types/            # TypeScript type definitions
+└── backend/                  # Python FastAPI backend
+    ├── main.py               # Main application entry point
+    ├── models.py             # Pydantic models
+    ├── quantum_simulator.py  # Quantum simulation logic
+    └── requirements.txt      # Python dependencies
+```
 
-To add new quantum gates, you need to:
+### Tech Stack
 
-1. Add the gate type to the `GateType` enum in both frontend (`src/types/quantum.ts`) and backend (`models.py`)
-2. Implement the gate logic in the `QuantumSimulator` class (`quantum_simulator.py`)
-3. Add the gate to the palette in the frontend (`src/components/circuit/GatePalette.tsx`)
+- **Frontend**: React with TypeScript, Tailwind CSS
+- **Backend**: Python with FastAPI
+- **Quantum Simulation**: Qiskit
+- **Visualization**: D3.js and Three.js
 
-### Extending Visualizations
-
-To add new visualization types:
-
-1. Create a new component in the `visualization` directory
-2. Add the necessary D3.js or Three.js code
-3. Update the `VisualizationPanel` component to include your new visualization
-
-### Troubleshooting
-
-#### Dependency Conflicts
-
-If you encounter dependency conflicts in the Python backend, try:
-
-1. Delete the virtual environment and create a new one
-2. Install numpy first with a specific version:
-   ```
-   pip install numpy==1.23.5
-   ```
-3. Then install the remaining requirements:
-   ```
-   pip install -r requirements.txt
-   ```
-
-#### CORS Issues
+### CORS Issues
 
 If you encounter CORS issues when the frontend tries to communicate with the backend:
 
@@ -193,7 +174,7 @@ If you encounter CORS issues when the frontend tries to communicate with the bac
 2. Check that the backend CORS settings in `main.py` include your frontend URL
 3. Verify that the API base URL in the frontend matches your backend URL
 
-#### Frontend TypeScript Errors
+### Frontend TypeScript Errors
 
 The TypeScript errors shown during development are expected until you install the dependencies. After running `npm install` in the frontend directory, most of these errors should be resolved.
 
