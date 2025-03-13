@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import { Circuit, Gate, SimulationResult } from "../types/quantum";
 import {
   simulateCircuit,
@@ -39,6 +39,12 @@ interface CircuitContextType {
   // Import/Export
   exportCircuit: () => Promise<string>;
   importCircuit: (qasm: string) => Promise<void>;
+
+  // QASM Editor
+  showQasmEditor: boolean;
+  toggleQasmEditor: () => void;
+  qasmCode: string;
+  setQasmCode: (code: string) => void;
 }
 
 const defaultCircuit: Circuit = {
@@ -79,6 +85,10 @@ export const CircuitProvider: React.FC<{ children: React.ReactNode }> = ({
   // Noise settings
   const [noiseEnabled, setNoiseEnabled] = useState(false);
   const [noiseLevel, setNoiseLevel] = useState(0.01);
+
+  // QASM Editor
+  const [showQasmEditor, setShowQasmEditor] = useState(false);
+  const [qasmCode, setQasmCode] = useState("");
 
   // Add a gate to the circuit
   const addGate = (gate: Gate) => {
@@ -195,6 +205,15 @@ export const CircuitProvider: React.FC<{ children: React.ReactNode }> = ({
     setNoiseEnabled(!noiseEnabled);
   };
 
+  // Toggle QASM editor
+  const toggleQasmEditor = () => {
+    setShowQasmEditor(!showQasmEditor);
+    if (!showQasmEditor) {
+      // When opening the editor, populate it with the current circuit
+      exportCircuit().then((qasm) => setQasmCode(qasm));
+    }
+  };
+
   // Export circuit to QASM
   const exportCircuit = async (): Promise<string> => {
     try {
@@ -240,6 +259,18 @@ export const CircuitProvider: React.FC<{ children: React.ReactNode }> = ({
     return probabilities;
   };
 
+  // Auto-run simulation whenever the circuit changes
+  useEffect(() => {
+    // Don't run simulation if we're in step mode
+    if (!isStepMode && !isSimulating && circuit.gates.length > 0) {
+      const simulationTimer = setTimeout(() => {
+        runSimulation();
+      }, 300); // Small delay to avoid too many API calls when making multiple changes
+
+      return () => clearTimeout(simulationTimer);
+    }
+  }, [circuit, isStepMode, isSimulating]);
+
   const value = {
     circuit,
     addGate,
@@ -262,6 +293,10 @@ export const CircuitProvider: React.FC<{ children: React.ReactNode }> = ({
     setNoiseLevel,
     exportCircuit,
     importCircuit,
+    showQasmEditor,
+    toggleQasmEditor,
+    qasmCode,
+    setQasmCode,
   };
 
   return (

@@ -4,11 +4,12 @@
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
-    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
+  font-family: "Courier New", Courier, monospace;
+  -webkit-font-smoothing: none;
   -moz-osx-font-smoothing: grayscale;
+  background-color: #111111;
+  color: #00ff00;
+  overflow: hidden;
 }
 
 code {
@@ -16,100 +17,215 @@ code {
     monospace;
 }
 
-/* Custom tooltip */
-.tooltip {
+/* Retro CRT screen effect */
+.crt-effect {
   position: relative;
-  display: inline-block;
 }
 
-.tooltip:hover::after {
-  content: attr(data-tip);
+.crt-effect::before {
+  content: " ";
+  display: block;
   position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 4px 8px;
-  background-color: rgba(0, 0, 0, 0.8);
-  color: white;
-  border-radius: 4px;
-  font-size: 12px;
-  white-space: nowrap;
-  z-index: 10;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
+    linear-gradient(
+      90deg,
+      rgba(255, 0, 0, 0.06),
+      rgba(0, 255, 0, 0.02),
+      rgba(0, 0, 255, 0.06)
+    );
+  z-index: 2;
+  background-size: 100% 2px, 3px 100%;
   pointer-events: none;
 }
 
-/* Quantum circuit styling */
-.quantum-wire {
-  height: 2px;
-  background-color: #333;
+.crt-effect::after {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: rgba(18, 16, 16, 0.1);
+  opacity: 0;
+  z-index: 2;
+  pointer-events: none;
+  animation: flicker 0.15s infinite;
 }
 
-.control-point {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background-color: #000;
-}
-
-.target-point {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  border: 2px solid #000;
-  background-color: transparent;
-}
-
-/* Connection lines between gates */
-.connection-line {
-  stroke: #000;
-  stroke-width: 2;
-}
-
-/* Animation for gate placement */
-@keyframes gate-placed {
+@keyframes flicker {
   0% {
-    transform: scale(1.2);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+    opacity: 0.27861;
+  }
+  5% {
+    opacity: 0.34769;
+  }
+  10% {
+    opacity: 0.23604;
+  }
+  15% {
+    opacity: 0.90626;
+  }
+  20% {
+    opacity: 0.18128;
+  }
+  25% {
+    opacity: 0.83891;
+  }
+  30% {
+    opacity: 0.65583;
+  }
+  35% {
+    opacity: 0.67807;
+  }
+  40% {
+    opacity: 0.26559;
+  }
+  45% {
+    opacity: 0.84693;
+  }
+  50% {
+    opacity: 0.96019;
+  }
+  55% {
+    opacity: 0.08594;
+  }
+  60% {
+    opacity: 0.20313;
+  }
+  65% {
+    opacity: 0.71988;
+  }
+  70% {
+    opacity: 0.53455;
+  }
+  75% {
+    opacity: 0.37288;
+  }
+  80% {
+    opacity: 0.71428;
+  }
+  85% {
+    opacity: 0.70419;
+  }
+  90% {
+    opacity: 0.7003;
+  }
+  95% {
+    opacity: 0.36108;
   }
   100% {
-    transform: scale(1);
-    box-shadow: none;
+    opacity: 0.24387;
   }
 }
 
-.gate-placed {
-  animation: gate-placed 0.3s ease-out;
-}
-
-/* Bloch sphere styling */
-.bloch-sphere-container {
-  position: relative;
+/* Scanline effect */
+.scanline {
   width: 100%;
-  height: 100%;
+  height: 100px;
+  z-index: 8;
+  background: linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 255, 0, 0.2) 10%,
+    rgba(0, 255, 0, 0.2) 100%
+  );
+  opacity: 0.1;
+  position: absolute;
+  bottom: 100%;
+  animation: scanline 10s linear infinite;
 }
 
-.bloch-sphere-container canvas {
-  width: 100% !important;
-  height: 100% !important;
+@keyframes scanline {
+  0% {
+    bottom: 100%;
+  }
+  80% {
+    bottom: 100%;
+  }
+  100% {
+    bottom: -100%;
+  }
 }
 
-/* Visualization panel tabs */
-.tab-button {
-  @apply py-2 px-4 focus:outline-none;
+/* Glowing text effect */
+.glow {
+  text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00;
 }
 
-.tab-button.active {
-  @apply border-b-2 border-blue-500 text-blue-500;
+/* Retro button styles */
+.retro-button {
+  background-color: #111111;
+  color: #00ff00;
+  border: 1px solid #00ff00;
+  padding: 0.5rem 1rem;
+  font-family: "Courier New", Courier, monospace;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.tab-button:not(.active) {
-  @apply text-gray-500 hover:text-gray-700;
+.retro-button:hover {
+  background-color: #00ff00;
+  color: #111111;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .container {
-    padding-left: 1rem;
-    padding-right: 1rem;
+.retro-button:active {
+  transform: scale(0.98);
+}
+
+/* Retro input styles */
+.retro-input {
+  background-color: #111111;
+  color: #00ff00;
+  border: 1px solid #00ff00;
+  padding: 0.5rem;
+  font-family: "Courier New", Courier, monospace;
+}
+
+.retro-input:focus {
+  outline: none;
+  box-shadow: 0 0 5px #00ff00;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #111111;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #00aa00;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #00ff00;
+}
+
+/* Blinking cursor effect */
+.cursor {
+  display: inline-block;
+  width: 0.5em;
+  height: 1em;
+  background-color: #00ff00;
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
   }
 }

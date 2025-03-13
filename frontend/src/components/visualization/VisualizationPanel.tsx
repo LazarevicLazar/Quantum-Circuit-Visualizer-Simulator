@@ -1,17 +1,15 @@
-import React, { useState } from "react";
+import React from "react";
 import BlochSphere from "./BlochSphere";
 import StateVector from "./StateVector";
 import ProbabilityChart from "./ProbabilityChart";
+import DensityMatrixDisplay from "./DensityMatrixDisplay";
+import SampleDisplay from "./SampleDisplay";
 import { useCircuit } from "../../context/CircuitContext";
 
 interface VisualizationPanelProps {}
 
 const VisualizationPanel: React.FC<VisualizationPanelProps> = () => {
-  const [activeTab, setActiveTab] = useState<
-    "bloch" | "statevector" | "probability"
-  >("bloch");
-
-  const { simulationResult, isSimulating } = useCircuit();
+  const { simulationResult, isSimulating, circuit } = useCircuit();
 
   // If there's no simulation result, use a default state
   const state = simulationResult?.finalState || {
@@ -21,11 +19,15 @@ const VisualizationPanel: React.FC<VisualizationPanelProps> = () => {
 
   // Generate Bloch sphere coordinates from the state vector
   const generateBlochCoordinates = () => {
-    if (!simulationResult) return [];
+    if (!simulationResult || !simulationResult.qubit_states) return [];
 
-    // This is a simplified calculation - in a real implementation,
-    // we would use proper quantum mechanics to calculate the Bloch coordinates
-    return Array(3)
+    // Use the qubit states from the simulation result if available
+    if (simulationResult.qubit_states) {
+      return simulationResult.qubit_states;
+    }
+
+    // Fallback to random values
+    return Array(circuit.numQubits)
       .fill(0)
       .map((_, i) => ({
         qubitIndex: i,
@@ -37,109 +39,125 @@ const VisualizationPanel: React.FC<VisualizationPanelProps> = () => {
       }));
   };
 
+  // Generate a density matrix for display
+  const generateDensityMatrix = () => {
+    if (!simulationResult || !simulationResult.density_matrices) {
+      // Create a default density matrix for a single qubit in |0⟩ state
+      return {
+        matrix: [
+          [
+            { real: 1, imag: 0 },
+            { real: 0, imag: 0 },
+          ],
+          [
+            { real: 0, imag: 0 },
+            { real: 0, imag: 0 },
+          ],
+        ],
+        qubits: [0],
+      };
+    }
+
+    // Return the first density matrix from the simulation result
+    return simulationResult.density_matrices[0];
+  };
+
   return (
-    <div className="bg-white p-4 rounded-lg shadow-md">
-      <h2 className="text-xl font-bold mb-4">Quantum State Visualization</h2>
+    <div className="bg-gray-800 p-3 rounded-lg shadow-md border border-green-800 h-full overflow-auto">
+      <div className="flex justify-between items-center mb-2">
+        <h2 className="text-lg font-bold text-green-400">Quantum State</h2>
 
-      {/* Tabs */}
-      <div className="flex border-b mb-4">
-        <button
-          className={`py-2 px-4 ${
-            activeTab === "bloch"
-              ? "border-b-2 border-blue-500 text-blue-500"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
-          onClick={() => setActiveTab("bloch")}
-        >
-          Bloch Sphere
-        </button>
-        <button
-          className={`py-2 px-4 ${
-            activeTab === "statevector"
-              ? "border-b-2 border-blue-500 text-blue-500"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
-          onClick={() => setActiveTab("statevector")}
-        >
-          State Vector
-        </button>
-        <button
-          className={`py-2 px-4 ${
-            activeTab === "probability"
-              ? "border-b-2 border-blue-500 text-blue-500"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
-          onClick={() => setActiveTab("probability")}
-        >
-          Probability
-        </button>
-      </div>
-
-      {/* Simulation Status */}
-      <div className="mb-4">
-        <div className="text-sm text-gray-600">
+        {/* Simulation Status */}
+        <div className="text-xs text-green-500">
           {isSimulating ? (
             <div className="flex items-center">
-              <div className="animate-spin mr-2 h-4 w-4 border-t-2 border-blue-500 rounded-full"></div>
-              Simulating...
+              <div className="animate-pulse mr-1 h-2 w-2 bg-green-500 rounded-full"></div>
+              <span>Simulating...</span>
             </div>
           ) : simulationResult ? (
-            <div className="text-green-600">Simulation complete</div>
+            <div>Simulation complete</div>
           ) : (
             <div>No simulation run yet</div>
           )}
         </div>
       </div>
 
-      {/* Visualization Content */}
-      <div className="h-64 border border-gray-200 rounded">
-        {activeTab === "bloch" && (
-          <div className="h-full">
-            {simulationResult ? (
+      {/* Visualization Content - All visualizations displayed side by side */}
+      {simulationResult ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-2">
+          {/* Bloch Sphere */}
+          <div className="bg-gray-900 p-2 rounded-lg border border-green-800">
+            <h3 className="text-sm font-semibold mb-1 text-green-400">
+              Bloch Sphere
+            </h3>
+            <div className="h-32 border border-green-900 rounded overflow-hidden">
               <BlochSphere qubitStates={generateBlochCoordinates()} />
-            ) : (
-              <div className="bg-gray-100 h-full flex items-center justify-center">
-                <p className="text-gray-500">Run a simulation to see results</p>
-              </div>
-            )}
+            </div>
+            <div className="mt-1 text-xs text-green-600">
+              <p>|0⟩: North, |1⟩: South</p>
+            </div>
           </div>
-        )}
 
-        {activeTab === "statevector" && (
-          <div className="h-full">
-            {simulationResult ? (
+          {/* State Vector */}
+          <div className="bg-gray-900 p-2 rounded-lg border border-green-800">
+            <h3 className="text-sm font-semibold mb-1 text-green-400">
+              State Vector
+            </h3>
+            <div className="h-32 border border-green-900 rounded overflow-hidden">
               <StateVector statevector={state.statevector} />
-            ) : (
-              <div className="bg-gray-100 h-full flex items-center justify-center">
-                <p className="text-gray-500">Run a simulation to see results</p>
-              </div>
-            )}
+            </div>
+            <div className="mt-1 text-xs text-green-600">
+              <p>Height: Magnitude, Color: Phase</p>
+            </div>
           </div>
-        )}
 
-        {activeTab === "probability" && (
-          <div className="h-full">
-            {simulationResult ? (
+          {/* Probability Chart */}
+          <div className="bg-gray-900 p-2 rounded-lg border border-green-800">
+            <h3 className="text-sm font-semibold mb-1 text-green-400">
+              Probability
+            </h3>
+            <div className="h-32 border border-green-900 rounded overflow-hidden">
               <ProbabilityChart probabilities={state.probabilities} />
-            ) : (
-              <div className="bg-gray-100 h-full flex items-center justify-center">
-                <p className="text-gray-500">Run a simulation to see results</p>
-              </div>
-            )}
+            </div>
+            <div className="mt-1 text-xs text-green-600">
+              <p>Probability = |Amplitude|²</p>
+            </div>
           </div>
-        )}
-      </div>
 
-      {/* Legend */}
-      <div className="mt-4 p-2 bg-gray-50 rounded text-sm">
-        <h3 className="font-semibold mb-1">Legend:</h3>
-        <ul className="list-disc pl-5 space-y-1">
-          <li>|0⟩: Ground state (North Pole)</li>
-          <li>|1⟩: Excited state (South Pole)</li>
-          <li>|+⟩: Superposition along X-axis</li>
-          <li>|-⟩: Negative superposition along X-axis</li>
-        </ul>
-      </div>
+          {/* Density Matrix */}
+          <div className="bg-gray-900 p-2 rounded-lg border border-green-800">
+            <h3 className="text-sm font-semibold mb-1 text-green-400">
+              Density Matrix
+            </h3>
+            <div className="h-32 border border-green-900 rounded overflow-auto">
+              <DensityMatrixDisplay
+                matrix={generateDensityMatrix().matrix}
+                qubits={generateDensityMatrix().qubits}
+              />
+            </div>
+            <div className="mt-1 text-xs text-green-600">
+              <p>Diagonal: Probabilities</p>
+            </div>
+          </div>
+
+          {/* Sample Display */}
+          <div className="bg-gray-900 p-2 rounded-lg border border-green-800">
+            <h3 className="text-sm font-semibold mb-1 text-green-400">
+              Samples
+            </h3>
+            <div className="h-32 border border-green-900 rounded overflow-auto">
+              <SampleDisplay state={state} numQubits={circuit.numQubits} />
+            </div>
+            <div className="mt-1 text-xs text-green-600">
+              <p>Measurement outcomes</p>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-gray-900 h-32 flex items-center justify-center rounded-lg border border-green-800">
+          <p className="text-green-600">Run a simulation to see results</p>
+        </div>
+      )}
     </div>
   );
 };

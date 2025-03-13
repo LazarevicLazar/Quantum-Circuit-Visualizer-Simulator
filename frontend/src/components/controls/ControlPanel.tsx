@@ -5,7 +5,6 @@ interface ControlPanelProps {}
 
 const ControlPanel: React.FC<ControlPanelProps> = () => {
   const {
-    runSimulation,
     isSimulating,
     isStepMode,
     toggleStepMode,
@@ -16,123 +15,92 @@ const ControlPanel: React.FC<ControlPanelProps> = () => {
     toggleNoise,
     noiseLevel,
     setNoiseLevel,
-    exportCircuit,
-    importCircuit,
     clearCircuit,
+    toggleQasmEditor,
   } = useCircuit();
 
-  const [importQasm, setImportQasm] = useState("");
-  const [showImportModal, setShowImportModal] = useState(false);
-
-  const handleRun = () => {
-    runSimulation();
-  };
-
-  const handleExport = async () => {
-    try {
-      const qasm = await exportCircuit();
-      alert(`Circuit exported to QASM:\n\n${qasm}`);
-    } catch (error) {
-      alert("Failed to export circuit");
-    }
-  };
-
-  const handleImport = () => {
-    setShowImportModal(true);
-  };
-
-  const handleImportSubmit = async () => {
-    try {
-      await importCircuit(importQasm);
-      setShowImportModal(false);
-      setImportQasm("");
-      alert("Circuit imported successfully");
-    } catch (error) {
-      alert("Failed to import circuit");
-    }
-  };
+  const [showNoiseSettings, setShowNoiseSettings] = useState(false);
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-md">
-      <h2 className="text-xl font-bold mb-4">Control Panel</h2>
+    <div className="flex items-center space-x-2 text-sm">
+      {/* Step Mode Controls */}
+      {isStepMode && (
+        <>
+          <button
+            className="px-2 py-1 rounded text-xs bg-blue-800 hover:bg-blue-700 text-green-400 border border-green-700"
+            onClick={nextStep}
+          >
+            Next Step
+          </button>
+          <span className="px-2 py-1 text-xs bg-gray-900 rounded text-green-400 border border-green-700">
+            Step: {currentStep}
+          </span>
+        </>
+      )}
 
-      <div className="space-y-4">
-        {/* Simulation Controls */}
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Simulation</h3>
-          <div className="flex flex-wrap gap-2">
-            <button
-              className={`px-3 py-1 rounded ${
-                isSimulating
-                  ? "bg-red-500 hover:bg-red-600"
-                  : "bg-green-500 hover:bg-green-600"
-              } text-white`}
-              onClick={handleRun}
-              disabled={isStepMode || isSimulating}
-            >
-              {isSimulating ? "Simulating..." : "Run"}
-            </button>
+      <button
+        className={`px-2 py-1 rounded text-xs ${
+          isStepMode ? "bg-blue-800" : "bg-gray-700 hover:bg-gray-600"
+        } text-green-400 border border-green-700`}
+        onClick={toggleStepMode}
+        disabled={isSimulating}
+      >
+        {isStepMode ? "Exit Step" : "Step Mode"}
+      </button>
 
-            <button
-              className={`px-3 py-1 rounded ${
-                isStepMode ? "bg-blue-600" : "bg-blue-500 hover:bg-blue-600"
-              } text-white`}
-              onClick={toggleStepMode}
-              disabled={isSimulating}
-            >
-              {isStepMode ? "Exit Step Mode" : "Step Mode"}
-            </button>
+      <button
+        className="px-2 py-1 rounded text-xs bg-gray-700 hover:bg-gray-600 text-green-400 border border-green-700"
+        onClick={resetSimulation}
+        disabled={isSimulating}
+      >
+        Reset
+      </button>
 
-            {isStepMode && (
-              <>
-                <button
-                  className="px-3 py-1 rounded bg-blue-500 hover:bg-blue-600 text-white"
-                  onClick={nextStep}
-                >
-                  Next Step
-                </button>
-                <span className="px-2 py-1 bg-gray-200 rounded">
-                  Step: {currentStep}
-                </span>
-              </>
-            )}
+      <button
+        className="px-2 py-1 rounded text-xs bg-red-900 hover:bg-red-800 text-green-400 border border-green-700"
+        onClick={clearCircuit}
+        disabled={isSimulating}
+      >
+        Clear
+      </button>
 
-            <button
-              className="px-3 py-1 rounded bg-gray-500 hover:bg-gray-600 text-white"
-              onClick={resetSimulation}
-              disabled={isSimulating}
-            >
-              Reset
-            </button>
+      {/* Divider */}
+      <div className="h-6 w-px bg-green-800 mx-1"></div>
 
-            <button
-              className="px-3 py-1 rounded bg-yellow-500 hover:bg-yellow-600 text-white"
-              onClick={clearCircuit}
-              disabled={isSimulating}
-            >
-              Clear Circuit
-            </button>
-          </div>
-        </div>
+      {/* Noise Controls */}
+      <div className="relative">
+        <button
+          className={`px-2 py-1 rounded text-xs ${
+            noiseEnabled ? "bg-purple-900" : "bg-gray-700 hover:bg-gray-600"
+          } text-green-400 border border-green-700`}
+          onClick={() => setShowNoiseSettings(!showNoiseSettings)}
+          disabled={isSimulating}
+        >
+          Noise {noiseEnabled ? "On" : "Off"}
+        </button>
 
-        {/* Noise Controls */}
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Quantum Noise</h3>
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="noise-toggle"
-              checked={noiseEnabled}
-              onChange={toggleNoise}
-              className="h-4 w-4"
-              disabled={isSimulating}
-            />
-            <label htmlFor="noise-toggle">Enable Noise</label>
-          </div>
+        {/* Noise Settings Dropdown */}
+        {showNoiseSettings && (
+          <div className="absolute top-full right-0 mt-1 bg-gray-800 p-3 rounded shadow-lg z-10 w-48 border border-green-700">
+            <div className="flex items-center space-x-2 mb-2">
+              <input
+                type="checkbox"
+                id="noise-toggle"
+                checked={noiseEnabled}
+                onChange={toggleNoise}
+                className="h-4 w-4 bg-gray-700 border-green-700"
+                disabled={isSimulating}
+              />
+              <label htmlFor="noise-toggle" className="text-green-400 text-xs">
+                Enable Noise
+              </label>
+            </div>
 
-          {noiseEnabled && (
-            <div className="mt-2">
-              <label htmlFor="noise-level" className="block mb-1">
+            <div>
+              <label
+                htmlFor="noise-level"
+                className="block mb-1 text-green-400 text-xs"
+              >
                 Noise Level: {(noiseLevel * 100).toFixed(1)}%
               </label>
               <input
@@ -144,60 +112,30 @@ const ControlPanel: React.FC<ControlPanelProps> = () => {
                 value={noiseLevel}
                 onChange={(e) => setNoiseLevel(parseFloat(e.target.value))}
                 className="w-full"
-                disabled={isSimulating}
+                disabled={isSimulating || !noiseEnabled}
               />
             </div>
-          )}
-        </div>
-
-        {/* Import/Export */}
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Circuit I/O</h3>
-          <div className="flex space-x-2">
-            <button
-              className="px-3 py-1 rounded bg-purple-500 hover:bg-purple-600 text-white"
-              onClick={handleExport}
-              disabled={isSimulating}
-            >
-              Export QASM
-            </button>
-            <button
-              className="px-3 py-1 rounded bg-purple-500 hover:bg-purple-600 text-white"
-              onClick={handleImport}
-              disabled={isSimulating}
-            >
-              Import QASM
-            </button>
           </div>
-        </div>
+        )}
       </div>
 
-      {/* Import Modal */}
-      {showImportModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-lg w-full">
-            <h3 className="text-xl font-bold mb-4">Import QASM</h3>
-            <textarea
-              className="w-full h-40 p-2 border border-gray-300 rounded mb-4"
-              value={importQasm}
-              onChange={(e) => setImportQasm(e.target.value)}
-              placeholder="Paste QASM code here..."
-            />
-            <div className="flex justify-end space-x-2">
-              <button
-                className="px-4 py-2 bg-gray-300 rounded"
-                onClick={() => setShowImportModal(false)}
-              >
-                Cancel
-              </button>
-              <button
-                className="px-4 py-2 bg-blue-500 text-white rounded"
-                onClick={handleImportSubmit}
-              >
-                Import
-              </button>
-            </div>
-          </div>
+      {/* Divider */}
+      <div className="h-6 w-px bg-green-800 mx-1"></div>
+
+      {/* QASM Editor Button */}
+      <button
+        className="px-2 py-1 rounded text-xs bg-indigo-900 hover:bg-indigo-800 text-green-400 border border-green-700"
+        onClick={toggleQasmEditor}
+        disabled={isSimulating}
+      >
+        QASM Editor
+      </button>
+
+      {/* Simulation Status */}
+      {isSimulating && (
+        <div className="flex items-center ml-2">
+          <div className="animate-pulse mr-1 h-2 w-2 bg-green-500 rounded-full"></div>
+          <span className="text-xs text-green-500">Simulating...</span>
         </div>
       )}
     </div>

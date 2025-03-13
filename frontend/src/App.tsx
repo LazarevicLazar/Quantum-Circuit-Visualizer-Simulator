@@ -5,40 +5,74 @@ import "./App.css";
 import CircuitEditor from "./components/circuit/CircuitEditor";
 import ControlPanel from "./components/controls/ControlPanel";
 import VisualizationPanel from "./components/visualization/VisualizationPanel";
-import { CircuitProvider } from "./context/CircuitContext";
+import GatePalette from "./components/circuit/GatePalette";
+import QasmEditor from "./components/qasm/QasmEditor";
+import { CircuitProvider, useCircuit } from "./context/CircuitContext";
 
+// Main App Component
 function App() {
   return (
     <DndProvider backend={HTML5Backend}>
       <CircuitProvider>
-        <div className="min-h-screen bg-gray-100">
-          <header className="bg-blue-600 text-white p-4 shadow-md">
-            <h1 className="text-2xl font-bold">
-              Quantum Circuit Visualizer & Simulator
-            </h1>
-          </header>
-          <main className="container mx-auto p-4">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              <div className="lg:col-span-2">
-                <CircuitEditor />
-              </div>
-              <div className="lg:col-span-1">
-                <ControlPanel />
-                <div className="mt-4">
-                  <VisualizationPanel />
-                </div>
-              </div>
-            </div>
-          </main>
-          <footer className="bg-gray-200 p-4 text-center text-gray-600">
-            <p>
-              Quantum Circuit Visualizer & Simulator - Built with React,
-              TypeScript, and Qiskit
-            </p>
-          </footer>
-        </div>
+        <AppContent />
       </CircuitProvider>
     </DndProvider>
+  );
+}
+
+// App Content Component (to use the circuit context)
+function AppContent() {
+  const { showQasmEditor } = useCircuit();
+
+  return (
+    <div className="min-h-screen bg-gray-900 text-green-400 font-mono flex flex-col crt-effect">
+      <div className="scanline"></div>
+
+      {/* Navigation Bar with Control Panel */}
+      <header className="bg-gray-800 text-green-400 shadow-md border-b border-green-800">
+        <div className="container mx-auto p-2">
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-bold glow">
+              Quantum Circuit Visualizer
+            </h1>
+            <ControlPanel />
+          </div>
+        </div>
+      </header>
+
+      <main className="container mx-auto p-2 flex-grow flex flex-col h-[calc(100vh-8rem)]">
+        {/* Main Content Area */}
+        <div className="flex h-full gap-2">
+          {/* Circuit Editor on the left */}
+          <div className="flex-grow h-full overflow-auto">
+            <CircuitEditor />
+          </div>
+
+          {/* Gate Palette on the right */}
+          <div className="w-64 shrink-0 h-full overflow-auto">
+            <div className="bg-gray-800 p-3 rounded-lg shadow-md border border-green-800 h-full">
+              <h2 className="text-lg font-bold mb-2">Gate Palette</h2>
+              <GatePalette />
+            </div>
+          </div>
+        </div>
+
+        {/* Visualizations below the circuit */}
+        <div className="mt-2 h-1/3 min-h-[200px] overflow-auto">
+          <VisualizationPanel />
+        </div>
+      </main>
+
+      <footer className="bg-gray-800 p-2 text-center text-green-600 border-t border-green-800">
+        <p>Quantum Circuit Visualizer - Built with React & Qiskit</p>
+      </footer>
+
+      {/* QASM Editor Modal */}
+      {showQasmEditor && <QasmEditor />}
+
+      {/* Terminal flicker effect */}
+      <div className="fixed inset-0 pointer-events-none bg-green-500 opacity-0 z-50 flicker"></div>
+    </div>
   );
 }
 

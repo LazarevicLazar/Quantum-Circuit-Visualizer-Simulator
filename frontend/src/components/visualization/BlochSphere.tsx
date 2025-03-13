@@ -22,7 +22,7 @@ const BlochSphere: React.FC<BlochSphereProps> = ({
 
     // Set up scene
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xf0f0f0);
+    scene.background = new THREE.Color(0x111111); // Dark background for retro look
 
     // Set up camera
     const camera = new THREE.PerspectiveCamera(
@@ -44,18 +44,32 @@ const BlochSphere: React.FC<BlochSphereProps> = ({
     controls.dampingFactor = 0.25;
 
     // Create Bloch sphere
-    const sphereGeometry = new THREE.SphereGeometry(1, 32, 32);
+    const sphereGeometry = new THREE.SphereGeometry(1, 16, 16); // Lower poly for retro look
     const sphereMaterial = new THREE.MeshBasicMaterial({
-      color: 0xffffff,
+      color: 0x00ff00, // Green for retro terminal look
       transparent: true,
-      opacity: 0.3,
+      opacity: 0.2,
       wireframe: true,
     });
     const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
     scene.add(sphere);
 
+    // Add grid lines for retro look
+    const gridHelper = new THREE.GridHelper(2, 10, 0x00ff00, 0x004400);
+    gridHelper.rotation.x = Math.PI / 2;
+    scene.add(gridHelper);
+
     // Add axes
     const axesHelper = new THREE.AxesHelper(1.2);
+    // Change axes colors to match retro theme
+    if (axesHelper.material instanceof THREE.Material) {
+      axesHelper.material.dispose();
+    }
+    const axesMaterial = new THREE.LineBasicMaterial({
+      vertexColors: true,
+      linewidth: 2,
+    });
+    axesHelper.material = axesMaterial;
     scene.add(axesHelper);
 
     // Add axis labels
@@ -70,7 +84,7 @@ const BlochSphere: React.FC<BlochSphereProps> = ({
       const ctx = canvas.getContext("2d");
       if (ctx) {
         ctx.fillStyle = `#${color.toString(16).padStart(6, "0")}`;
-        ctx.font = "48px Arial";
+        ctx.font = "bold 48px monospace"; // Monospace for retro look
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText(text, 32, 32);
@@ -86,7 +100,7 @@ const BlochSphere: React.FC<BlochSphereProps> = ({
 
     addAxisLabel("X", new THREE.Vector3(1.3, 0, 0), 0xff0000);
     addAxisLabel("Y", new THREE.Vector3(0, 1.3, 0), 0x00ff00);
-    addAxisLabel("Z", new THREE.Vector3(0, 0, 1.3), 0x0000ff);
+    addAxisLabel("Z", new THREE.Vector3(0, 0, 1.3), 0x00ffff); // Cyan for Z axis
 
     // Add state vectors for each qubit
     qubitStates.forEach((qubitState, index) => {
@@ -104,7 +118,7 @@ const BlochSphere: React.FC<BlochSphereProps> = ({
       const arrowDir = new THREE.Vector3(normalizedX, normalizedY, normalizedZ);
       const arrowOrigin = new THREE.Vector3(0, 0, 0);
       const arrowLength = 1;
-      const arrowColor = 0xffff00;
+      const arrowColor = 0x00ffff; // Cyan for retro look
 
       const arrowHelper = new THREE.ArrowHelper(
         arrowDir,
@@ -117,11 +131,15 @@ const BlochSphere: React.FC<BlochSphereProps> = ({
       scene.add(arrowHelper);
 
       // Add a point at the end of the vector
-      const pointGeometry = new THREE.SphereGeometry(0.05, 16, 16);
+      const pointGeometry = new THREE.SphereGeometry(0.05, 8, 8); // Lower poly for retro look
       const pointMaterial = new THREE.MeshBasicMaterial({ color: arrowColor });
       const point = new THREE.Mesh(pointGeometry, pointMaterial);
       point.position.set(normalizedX, normalizedY, normalizedZ);
       scene.add(point);
+
+      // Add |0⟩ and |1⟩ state labels
+      addAxisLabel("|0⟩", new THREE.Vector3(0, 0, 1.1), 0x00ffff);
+      addAxisLabel("|1⟩", new THREE.Vector3(0, 0, -1.1), 0x00ffff);
     });
 
     // Animation loop
@@ -165,8 +183,8 @@ const BlochSphere: React.FC<BlochSphereProps> = ({
   return (
     <div
       ref={mountRef}
-      className="w-full h-full bloch-sphere-container"
-      style={{ minHeight: "200px" }}
+      className="w-full h-full bloch-sphere-container bg-gray-900"
+      style={{ minHeight: "100%" }}
     />
   );
 };

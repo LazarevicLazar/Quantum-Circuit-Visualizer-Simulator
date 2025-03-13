@@ -1,6 +1,7 @@
 import React from "react";
 import { useDrag } from "react-dnd";
-import { Gate, GateType } from "../../types/quantum";
+import { Gate, GateType, GateCategory } from "../../types/quantum";
+import { GATE_INFO } from "../../gates/GateDefinitions";
 
 interface GateItemProps {
   gate: Gate;
@@ -22,81 +23,118 @@ const GateItem: React.FC<GateItemProps> = ({
     canDrag: () => isDraggable,
   }));
 
-  // Gate color based on type
-  const getGateColor = (type: GateType): string => {
-    switch (type) {
-      case GateType.HADAMARD:
-        return "bg-blue-500";
-      case GateType.PAULI_X:
-        return "bg-red-500";
-      case GateType.PAULI_Y:
-        return "bg-green-500";
-      case GateType.PAULI_Z:
-        return "bg-purple-500";
-      case GateType.PHASE:
-        return "bg-yellow-500";
-      case GateType.PI_8:
-        return "bg-orange-500";
-      case GateType.CNOT:
-        return "bg-indigo-500";
-      case GateType.SWAP:
-        return "bg-pink-500";
-      case GateType.TOFFOLI:
-        return "bg-teal-500";
-      case GateType.MEASURE:
-        return "bg-gray-500";
+  // Get gate info
+  const gateInfo = GATE_INFO[gate.type];
+
+  // Gate color based on category
+  const getGateColor = (): string => {
+    const category = gateInfo?.category || GateCategory.SPECIAL;
+
+    switch (category) {
+      case GateCategory.SINGLE_QUBIT:
+        return "bg-blue-900 border-blue-500";
+      case GateCategory.MULTI_QUBIT:
+        return "bg-indigo-900 border-indigo-500";
+      case GateCategory.ROTATION:
+        return "bg-purple-900 border-purple-500";
+      case GateCategory.ARITHMETIC:
+        return "bg-green-900 border-green-500";
+      case GateCategory.MODULAR:
+        return "bg-emerald-900 border-emerald-500";
+      case GateCategory.BIT_MANIPULATION:
+        return "bg-teal-900 border-teal-500";
+      case GateCategory.FOURIER:
+        return "bg-cyan-900 border-cyan-500";
+      case GateCategory.COMPARISON:
+        return "bg-sky-900 border-sky-500";
+      case GateCategory.CONTROL:
+        return "bg-blue-900 border-blue-700";
+      case GateCategory.POST_SELECTION:
+        return "bg-violet-900 border-violet-500";
+      case GateCategory.DETECTOR:
+        return "bg-fuchsia-900 border-fuchsia-500";
+      case GateCategory.INPUT:
+        return "bg-pink-900 border-pink-500";
+      case GateCategory.MEASUREMENT:
+        return "bg-gray-900 border-gray-500";
+      case GateCategory.DISPLAY:
+        return "bg-amber-900 border-amber-500";
+      case GateCategory.SPECIAL:
+        return "bg-rose-900 border-rose-500";
       default:
-        return "bg-gray-400";
+        return "bg-gray-900 border-gray-500";
     }
   };
 
+  // Get gate symbol
+  const getGateSymbol = (): string => {
+    return gateInfo?.symbol || gate.type;
+  };
+
   // Get gate description
-  const getGateDescription = (type: GateType): string => {
-    switch (type) {
-      case GateType.HADAMARD:
-        return "Hadamard Gate: Creates superposition";
-      case GateType.PAULI_X:
-        return "Pauli-X Gate: Bit flip (NOT gate)";
-      case GateType.PAULI_Y:
-        return "Pauli-Y Gate: Bit and phase flip";
-      case GateType.PAULI_Z:
-        return "Pauli-Z Gate: Phase flip";
-      case GateType.PHASE:
-        return "Phase Gate (S): π/2 phase rotation";
-      case GateType.PI_8:
-        return "π/8 Gate (T): π/4 phase rotation";
-      case GateType.CNOT:
-        return "CNOT Gate: Controlled-NOT operation";
-      case GateType.SWAP:
-        return "SWAP Gate: Swaps two qubits";
-      case GateType.TOFFOLI:
-        return "Toffoli Gate: Controlled-controlled-NOT";
-      case GateType.MEASURE:
-        return "Measurement: Collapses quantum state";
-      default:
-        return "Unknown Gate";
+  const getGateDescription = (): string => {
+    return gateInfo?.description || "Unknown Gate";
+  };
+
+  // Determine if the gate symbol needs a smaller font
+  const needsSmallerFont = (): boolean => {
+    const symbol = getGateSymbol();
+    return symbol.length > 2;
+  };
+
+  // Determine if the gate is a display gate
+  const isDisplayGate = (): boolean => {
+    return gateInfo?.isDisplay || false;
+  };
+
+  // Determine if the gate is a control gate
+  const isControlGate = (): boolean => {
+    return gateInfo?.isControl || false;
+  };
+
+  // Determine if the gate is parameterized
+  const isParameterizedGate = (): boolean => {
+    return gateInfo?.isParameterized || false;
+  };
+
+  // Get additional styling based on gate properties
+  const getAdditionalStyling = (): string => {
+    let styles = "";
+
+    if (isDisplayGate()) {
+      styles += " border-2 border-yellow-500";
+    } else if (isControlGate()) {
+      styles += " border-2 border-blue-500";
+    } else if (isParameterizedGate()) {
+      styles += " border-dashed border-2";
+    } else {
+      styles += " border border-opacity-80";
     }
+
+    return styles;
   };
 
   return (
     <div
       ref={isDraggable ? drag : undefined}
       className={`
-        ${getGateColor(gate.type)}
-        text-white font-bold w-10 h-10 rounded-md flex items-center justify-center
+        ${getGateColor()}
+        text-green-400 font-bold w-10 h-10 rounded-md flex items-center justify-center
         ${isDragging ? "opacity-50" : "opacity-100"}
         ${isDraggable ? "cursor-move" : "cursor-default"}
         relative
         transition-all duration-150 transform hover:scale-105
         shadow-md
+        ${getAdditionalStyling()}
+        ${needsSmallerFont() ? "text-xs" : "text-sm"}
       `}
-      title={getGateDescription(gate.type)}
+      title={getGateDescription()}
     >
-      {gate.type}
+      {getGateSymbol()}
 
       {onRemove && (
         <button
-          className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-700 transition-colors"
+          className="absolute -top-2 -right-2 bg-red-900 text-green-400 rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-800 transition-colors border border-red-600"
           onClick={(e) => {
             e.stopPropagation();
             onRemove();

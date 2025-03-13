@@ -1,9 +1,9 @@
-import React, { useRef } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { useDrop } from "react-dnd";
 import GateItem from "./GateItem";
-import GatePalette from "./GatePalette";
 import { Gate, GateType } from "../../types/quantum";
 import { useCircuit } from "../../context/CircuitContext";
+import { GATE_INFO } from "../../gates/GateDefinitions";
 
 interface CircuitEditorProps {}
 
@@ -12,93 +12,122 @@ const CircuitEditor: React.FC<CircuitEditorProps> = () => {
 
   const circuitRef = useRef<HTMLDivElement | null>(null);
   const qubitRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [dropIndicator, setDropIndicator] = useState<{
+    qubit: number;
+    position: number;
+  } | null>(null);
+
+  // Initialize qubitRefs array when the number of qubits changes
+  useEffect(() => {
+    qubitRefs.current = qubitRefs.current.slice(0, circuit.numQubits);
+    while (qubitRefs.current.length < circuit.numQubits) {
+      qubitRefs.current.push(null);
+    }
+  }, [circuit.numQubits]);
 
   // Set up the drop target for the circuit
-  const [{ isOver }, drop] = useDrop(() => ({
-    accept: "gate",
-    drop: (item: { type: GateType; qubit: number }, monitor) => {
-      const offset = monitor.getClientOffset();
-      if (!offset || !circuitRef.current) return;
+  const [{ isOver }, drop] = useDrop(
+    () => ({
+      accept: "gate",
+      hover: (item: { type: GateType; qubit: number }, monitor) => {
+        const offset = monitor.getClientOffset();
+        if (!offset || !circuitRef.current) return;
 
-      // Find the closest qubit line
-      let targetQubit = 0;
-      let minDistance = Number.MAX_VALUE;
+        // Find the closest qubit line
+        let targetQubit = 0;
+        let minDistance = Number.MAX_VALUE;
 
-      qubitRefs.current.forEach((ref, index) => {
-        if (ref) {
-          const refRect = ref.getBoundingClientRect();
-          const distance = Math.abs(
-            refRect.top + refRect.height / 2 - offset.y
-          );
-          if (distance < minDistance) {
-            minDistance = distance;
-            targetQubit = index;
+        qubitRefs.current.forEach((ref, index) => {
+          if (ref) {
+            const refRect = ref.getBoundingClientRect();
+            const distance = Math.abs(
+              refRect.top + refRect.height / 2 - offset.y
+            );
+            if (distance < minDistance) {
+              minDistance = distance;
+              targetQubit = index;
+            }
+          }
+        });
+
+        // Find the closest position (column)
+        const circuitRect = circuitRef.current.getBoundingClientRect();
+        const relativeX = offset.x - circuitRect.left - 80; // Adjust for the qubit label width
+        const position = Math.max(0, Math.floor(relativeX / 60));
+
+        // Update drop indicator
+        setDropIndicator({ qubit: targetQubit, position });
+      },
+      drop: (item: { type: GateType; qubit: number }, monitor) => {
+        const offset = monitor.getClientOffset();
+        if (!offset || !circuitRef.current || !dropIndicator) return;
+
+        const targetQubit = dropIndicator.qubit;
+        const position = dropIndicator.position;
+
+        // Create the gate
+        const newGate: Gate = {
+          id: `${item.type}-${Date.now()}`,
+          type: item.type,
+          targets: [targetQubit],
+          controls: [],
+          position: position,
+        };
+
+        // Get gate info
+        const gateInfo = GATE_INFO[item.type];
+
+        // Special handling for multi-qubit gates
+        if (gateInfo) {
+          if (gateInfo.qubits > 1) {
+            if (
+              item.type === GateType.CNOT &&
+              targetQubit < circuit.numQubits - 1
+            ) {
+              newGate.controls = [targetQubit];
+              newGate.targets = [targetQubit + 1];
+            } else if (
+              item.type === GateType.SWAP &&
+              targetQubit < circuit.numQubits - 1
+            ) {
+              newGate.targets = [targetQubit, targetQubit + 1];
+            } else if (
+              item.type === GateType.TOFFOLI &&
+              targetQubit < circuit.numQubits - 2
+            ) {
+              newGate.controls = [targetQubit, targetQubit + 1];
+              newGate.targets = [targetQubit + 2];
+            }
           }
         }
-      });
 
-      // Find the next available column position
-      const nextColumn = getNextAvailableColumn();
+        // Check if there's already a gate at this position and qubit
+        const existingGate = circuit.gates.find(
+          (g) =>
+            g.position === position &&
+            (g.targets.includes(targetQubit) ||
+              g.controls.includes(targetQubit))
+        );
 
-      // Create the gate
-      const newGate: Gate = {
-        id: `${item.type}-${Date.now()}`,
-        type: item.type,
-        targets: [targetQubit],
-        controls: [],
-        position: nextColumn,
-      };
+        // Only add the gate if there isn't already one at this position
+        if (!existingGate) {
+          // Add the gate to the circuit
+          addGate(newGate);
+        }
 
-      // Special handling for multi-qubit gates
-      if (item.type === GateType.CNOT && targetQubit < circuit.numQubits - 1) {
-        newGate.controls = [targetQubit];
-        newGate.targets = [targetQubit + 1];
-      } else if (
-        item.type === GateType.SWAP &&
-        targetQubit < circuit.numQubits - 1
-      ) {
-        newGate.targets = [targetQubit, targetQubit + 1];
-      } else if (
-        item.type === GateType.TOFFOLI &&
-        targetQubit < circuit.numQubits - 2
-      ) {
-        newGate.controls = [targetQubit, targetQubit + 1];
-        newGate.targets = [targetQubit + 2];
-      }
-
-      // Add the gate to the circuit
-      addGate(newGate);
-    },
-    collect: (monitor) => ({
-      isOver: !!monitor.isOver(),
+        // Clear drop indicator
+        setDropIndicator(null);
+      },
+      collect: (monitor) => ({
+        isOver: !!monitor.isOver(),
+      }),
     }),
-  }));
+    [circuit.gates, circuit.numQubits, addGate, dropIndicator]
+  );
 
   // Function to set a ref for a qubit line
   const setQubitRef = (index: number) => (node: HTMLDivElement | null) => {
-    if (index < qubitRefs.current.length) {
-      qubitRefs.current[index] = node;
-    }
-  };
-
-  // Function to get the next available column for a new gate
-  const getNextAvailableColumn = (): number => {
-    if (circuit.gates.length === 0) return 0;
-
-    // Find the maximum position and add 1
-    const maxPosition = Math.max(...circuit.gates.map((gate) => gate.position));
-    return maxPosition + 1;
-  };
-
-  // Function to get gates for a specific qubit, sorted by position
-  const getGatesForQubit = (qubitIndex: number) => {
-    return circuit.gates
-      .filter(
-        (gate) =>
-          gate.targets.includes(qubitIndex) ||
-          gate.controls.includes(qubitIndex)
-      )
-      .sort((a, b) => a.position - b.position);
+    qubitRefs.current[index] = node;
   };
 
   // Function to render connection lines for multi-qubit gates
@@ -121,7 +150,7 @@ const CircuitEditor: React.FC<CircuitEditorProps> = () => {
       return (
         <div
           key={`connection-${gate.id}`}
-          className="absolute w-[2px] bg-black"
+          className="absolute w-[2px] bg-green-500"
           style={{
             left: `${position}px`,
             top: `${top}px`,
@@ -132,27 +161,44 @@ const CircuitEditor: React.FC<CircuitEditorProps> = () => {
     });
   };
 
+  // Function to render the drop indicator
+  const renderDropIndicator = () => {
+    if (!dropIndicator || !isOver) return null;
+
+    const { qubit, position } = dropIndicator;
+    const left = 80 + position * 60;
+    const top = qubit * 60;
+
+    return (
+      <div
+        className="absolute w-10 h-10 border-2 border-green-500 rounded-md bg-green-900 opacity-50"
+        style={{
+          left: `${left}px`,
+          top: `${top + 10}px`,
+        }}
+      />
+    );
+  };
+
   return (
-    <div className="bg-white p-4 rounded-lg shadow-md">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">Circuit Editor</h2>
+    <div className="bg-gray-800 p-3 rounded-lg shadow-md border border-green-800 h-full flex flex-col">
+      <div className="flex justify-between items-center mb-2">
+        <h2 className="text-lg font-bold text-green-400">Circuit Editor</h2>
         <div className="space-x-2">
           <button
-            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
+            className="bg-blue-900 hover:bg-blue-800 text-green-400 px-2 py-1 rounded text-xs border border-green-700"
             onClick={addQubit}
           >
             Add Qubit
           </button>
           <button
-            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+            className="bg-red-900 hover:bg-red-800 text-green-400 px-2 py-1 rounded text-xs border border-green-700"
             onClick={removeQubit}
           >
             Remove Qubit
           </button>
         </div>
       </div>
-
-      <GatePalette />
 
       <div
         ref={(el) => {
@@ -161,21 +207,27 @@ const CircuitEditor: React.FC<CircuitEditorProps> = () => {
           // Apply the drop ref
           drop(el);
         }}
-        className={`mt-4 border-2 ${
-          isOver ? "border-blue-400 bg-blue-50" : "border-gray-300"
-        } rounded-lg p-4 min-h-[300px] transition-colors duration-200 relative`}
+        className={`flex-grow border-2 ${
+          isOver ? "border-green-500 bg-gray-900" : "border-green-800"
+        } rounded-lg p-2 min-h-[200px] transition-colors duration-200 relative overflow-auto`}
+        onMouseLeave={() => setDropIndicator(null)}
       >
         {/* Connection lines for multi-qubit gates */}
         {renderConnectionLines()}
+
+        {/* Drop indicator */}
+        {renderDropIndicator()}
 
         {Array.from({ length: circuit.numQubits }).map((_, qubitIndex) => (
           <div
             key={qubitIndex}
             ref={setQubitRef(qubitIndex)}
-            className="flex items-center h-[60px] border-b border-gray-200 relative"
+            className="flex items-center h-[60px] border-b border-green-800 relative"
           >
-            <div className="w-[80px] font-mono">|0⟩ q{qubitIndex}</div>
-            <div className="flex-1 h-[2px] bg-gray-400"></div>
+            <div className="w-[80px] font-mono text-green-400">
+              |0⟩ q{qubitIndex}
+            </div>
+            <div className="flex-1 h-[2px] bg-green-800"></div>
 
             {/* Render gates for this qubit */}
             <div className="absolute left-[80px] right-0 top-0 bottom-0 flex items-center">
@@ -200,7 +252,7 @@ const CircuitEditor: React.FC<CircuitEditorProps> = () => {
                   return (
                     <div
                       key={`${gate.id}-control-${qubitIndex}`}
-                      className="absolute w-3 h-3 bg-black rounded-full z-10"
+                      className="absolute w-3 h-3 bg-green-500 rounded-full z-10"
                       style={{ left: position }}
                     />
                   );
@@ -216,7 +268,7 @@ const CircuitEditor: React.FC<CircuitEditorProps> = () => {
                         className="absolute w-6 h-6 flex items-center justify-center z-10"
                         style={{ left: position }}
                       >
-                        <div className="w-3 h-3 bg-black rounded-full" />
+                        <div className="w-3 h-3 bg-green-500 rounded-full" />
                       </div>
                     );
                   }
