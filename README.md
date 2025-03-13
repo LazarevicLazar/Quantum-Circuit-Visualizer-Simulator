@@ -181,9 +181,3 @@ The TypeScript errors shown during development are expected until you install th
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Acknowledgments
-
-- [Qiskit](https://qiskit.org/) - IBM's open-source quantum computing framework
-- [React](https://reactjs.org/) - A JavaScript library for building user interfaces
-- [FastAPI](https://fastapi.tiangolo.com/) - A modern, fast web framework for building APIs with Python
