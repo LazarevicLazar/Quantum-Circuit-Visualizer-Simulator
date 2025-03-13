@@ -1,0 +1,115 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+    monospace;
+}
+
+/* Custom tooltip */
+.tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip:hover::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 8px;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Quantum circuit styling */
+.quantum-wire {
+  height: 2px;
+  background-color: #333;
+}
+
+.control-point {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #000;
+}
+
+.target-point {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid #000;
+  background-color: transparent;
+}
+
+/* Connection lines between gates */
+.connection-line {
+  stroke: #000;
+  stroke-width: 2;
+}
+
+/* Animation for gate placement */
+@keyframes gate-placed {
+  0% {
+    transform: scale(1.2);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: none;
+  }
+}
+
+.gate-placed {
+  animation: gate-placed 0.3s ease-out;
+}
+
+/* Bloch sphere styling */
+.bloch-sphere-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.bloch-sphere-container canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Visualization panel tabs */
+.tab-button {
+  @apply py-2 px-4 focus:outline-none;
+}
+
+.tab-button.active {
+  @apply border-b-2 border-blue-500 text-blue-500;
+}
+
+.tab-button:not(.active) {
+  @apply text-gray-500 hover:text-gray-700;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}

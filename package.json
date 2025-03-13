@@ -1,0 +1,21 @@
+{
+  "name": "quantum-circuit-visualizer",
+  "version": "0.1.0",
+  "description": "A drag-and-drop visual interface for building and simulating quantum circuits",
+  "scripts": {
+    "start:frontend": "cd frontend && npm start",
+    "start:backend": "cd backend && uvicorn main:app --reload",
+    "start": "concurrently \"npm run start:frontend\" \"npm run start:backend\"",
+    "install:frontend": "cd frontend && npm install",
+    "install:backend": "cd backend && pip install -r requirements.txt",
+    "install:all": "npm install && npm run install:frontend && npm run install:backend",
+    "build:frontend": "cd frontend && npm run build",
+    "test:frontend": "cd frontend && npm test"
+  },
+  "dependencies": {
+    "concurrently": "^7.6.0",
+    "tailwindcss": "^4.0.13"
+  },
+  "author": "",
+  "license": "MIT"
+}
