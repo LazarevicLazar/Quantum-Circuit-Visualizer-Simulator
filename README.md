@@ -180,4 +180,12 @@ The TypeScript errors shown during development are expected until you install th
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+The following files are made available under the MIT License:
+
+- `backend/gate_implementations.py`
+
+- `backend/quantum_simulator.py`
+
+Copyright © Lazar Lazarevic
+
+These files may be used, copied, modified, merged, published, distributed, sublicensed, and/or sold subject to the terms of the MIT License.
